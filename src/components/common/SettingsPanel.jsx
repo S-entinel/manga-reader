@@ -23,9 +23,9 @@ export default function SettingsPanel({ isOpen, onClose }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-slate-800 rounded-xl max-w-md w-full max-h-[80vh] overflow-y-auto">
-        <div className="sticky top-0 bg-slate-800 p-4 border-b border-slate-700">
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+      <div className="bg-gray-800 rounded-xl max-w-md w-full max-h-screen overflow-y-auto">
+        <div className="sticky top-0 bg-gray-800 p-4 border-b border-gray-700">
           <div className="flex items-center justify-between">
             <h2 className="text-white text-xl font-bold">Settings</h2>
             <button
@@ -43,11 +43,11 @@ export default function SettingsPanel({ isOpen, onClose }) {
             <h3 className="text-white font-semibold mb-3">Appearance</h3>
             <div className="space-y-3">
               <div>
-                <label className="block text-purple-200 text-sm mb-2">Theme</label>
+                <label className="block text-purple-300 text-sm mb-2">Theme</label>
                 <select
                   value={settings.theme}
                   onChange={(e) => handleSettingChange('theme', e.target.value)}
-                  className="w-full bg-slate-700 text-white px-3 py-2 rounded-lg border border-slate-600"
+                  className="w-full bg-gray-700 text-white px-3 py-2 rounded-lg border border-gray-600"
                 >
                   <option value="dark">Dark</option>
                   <option value="light">Light</option>
@@ -56,7 +56,7 @@ export default function SettingsPanel({ isOpen, onClose }) {
               </div>
 
               <div>
-                <label className="block text-purple-200 text-sm mb-2">
+                <label className="block text-purple-300 text-sm mb-2">
                   Font Size: {settings.fontSize}px
                 </label>
                 <input
@@ -70,7 +70,7 @@ export default function SettingsPanel({ isOpen, onClose }) {
               </div>
 
               <div>
-                <label className="block text-purple-200 text-sm mb-2">
+                <label className="block text-purple-300 text-sm mb-2">
                   Brightness: {settings.brightness}%
                 </label>
                 <input
@@ -90,11 +90,11 @@ export default function SettingsPanel({ isOpen, onClose }) {
             <h3 className="text-white font-semibold mb-3">Reading</h3>
             <div className="space-y-3">
               <div>
-                <label className="block text-purple-200 text-sm mb-2">Reading Mode</label>
+                <label className="block text-purple-300 text-sm mb-2">Reading Mode</label>
                 <select
                   value={settings.readingMode}
                   onChange={(e) => handleSettingChange('readingMode', e.target.value)}
-                  className="w-full bg-slate-700 text-white px-3 py-2 rounded-lg border border-slate-600"
+                  className="w-full bg-gray-700 text-white px-3 py-2 rounded-lg border border-gray-600"
                 >
                   <option value="single">Single Page</option>
                   <option value="double">Double Page</option>
@@ -103,11 +103,11 @@ export default function SettingsPanel({ isOpen, onClose }) {
               </div>
 
               <div>
-                <label className="block text-purple-200 text-sm mb-2">Reading Direction</label>
+                <label className="block text-purple-300 text-sm mb-2">Reading Direction</label>
                 <select
                   value={settings.readingDirection}
                   onChange={(e) => handleSettingChange('readingDirection', e.target.value)}
-                  className="w-full bg-slate-700 text-white px-3 py-2 rounded-lg border border-slate-600"
+                  className="w-full bg-gray-700 text-white px-3 py-2 rounded-lg border border-gray-600"
                 >
                   <option value="ltr">Left to Right</option>
                   <option value="rtl">Right to Left (Manga)</option>
@@ -115,7 +115,7 @@ export default function SettingsPanel({ isOpen, onClose }) {
               </div>
 
               <div className="flex items-center justify-between">
-                <span className="text-purple-200">Show Page Numbers</span>
+                <span className="text-purple-300">Show Page Numbers</span>
                 <button
                   onClick={() => handleSettingChange('showPageNumbers', !settings.showPageNumbers)}
                   className={`w-12 h-6 rounded-full transition-colors ${
@@ -137,7 +137,7 @@ export default function SettingsPanel({ isOpen, onClose }) {
             <h3 className="text-white font-semibold mb-3">Features</h3>
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-purple-200">Bionic Reading</span>
+                <span className="text-purple-300">Bionic Reading</span>
                 <button
                   onClick={() => handleSettingChange('bionicReading', !settings.bionicReading)}
                   className={`w-12 h-6 rounded-full transition-colors ${
@@ -153,7 +153,7 @@ export default function SettingsPanel({ isOpen, onClose }) {
               </div>
 
               <div className="flex items-center justify-between">
-                <span className="text-purple-200">Translation</span>
+                <span className="text-purple-300">Translation</span>
                 <button
                   onClick={() => handleSettingChange('translationEnabled', !settings.translationEnabled)}
                   className={`w-12 h-6 rounded-full transition-colors ${
@@ -169,7 +169,7 @@ export default function SettingsPanel({ isOpen, onClose }) {
               </div>
 
               <div className="flex items-center justify-between">
-                <span className="text-purple-200">Auto Save Progress</span>
+                <span className="text-purple-300">Auto Save Progress</span>
                 <button
                   onClick={() => handleSettingChange('autoSave', !settings.autoSave)}
                   className={`w-12 h-6 rounded-full transition-colors ${
@@ -187,7 +187,7 @@ export default function SettingsPanel({ isOpen, onClose }) {
           </div>
 
           {/* Actions */}
-          <div className="pt-4 border-t border-slate-700">
+          <div className="pt-4 border-t border-gray-700">
             <button
               onClick={handleReset}
               className="w-full bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors"
