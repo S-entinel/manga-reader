@@ -1,10 +1,20 @@
 import React, { useState, useEffect } from 'react'
 import { settingsService } from './services/storage/settingsService'
+import { bookStorageService } from './services/storage/bookStorageService'
 import SettingsPanel from './components/common/SettingsPanel'
+import FileUploader from './components/upload/FileUploader'
+import LibraryView from './components/library/LibraryView'
 
 function App() {
   const [settings, setSettings] = useState(settingsService.getSettings());
   const [showSettings, setShowSettings] = useState(false);
+  const [currentView, setCurrentView] = useState('library'); // 'library' or 'upload'
+  const [books, setBooks] = useState([]);
+
+  // Load books on component mount
+  useEffect(() => {
+    setBooks(bookStorageService.getAllBooks());
+  }, []);
 
   // Listen for settings changes
   useEffect(() => {
@@ -13,6 +23,26 @@ function App() {
     }, 100);
     return () => clearInterval(interval);
   }, []);
+
+  const handleFileSelect = (files) => {
+    const newBooks = files.map(file => {
+      // For now, we'll create basic book entries
+      // In the next step, we'll add proper file processing
+      return bookStorageService.addBook({
+        name: file.name,
+        size: file.size,
+        totalPages: Math.floor(Math.random() * 200) + 50, // Placeholder
+      });
+    });
+
+    setBooks(bookStorageService.getAllBooks());
+    setCurrentView('library');
+  };
+
+  const handleBookSelect = (book) => {
+    // For now, just show an alert - we'll build the reader next
+    alert(`Opening "${book.title}" - Reader coming in next step!`);
+  };
 
   return (
     <div className={`min-h-screen ${settings.theme === 'light' ? 'bg-gray-100' : 'bg-gray-900'}`}>
@@ -25,55 +55,56 @@ function App() {
               </div>
               <h1 className="text-white text-xl font-bold">Manga Reader</h1>
             </div>
-            <button
-              onClick={() => setShowSettings(true)}
-              className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
-            >
-              ⚙️ Settings
-            </button>
+            
+            <div className="flex items-center space-x-4">
+              <nav className="flex space-x-4">
+                <button
+                  onClick={() => setCurrentView('library')}
+                  className={`px-3 py-2 rounded-lg transition-colors ${
+                    currentView === 'library' 
+                      ? 'bg-purple-500 text-white' 
+                      : 'text-purple-300 hover:text-white'
+                  }`}
+                >
+                  Library
+                </button>
+                <button
+                  onClick={() => setCurrentView('upload')}
+                  className={`px-3 py-2 rounded-lg transition-colors ${
+                    currentView === 'upload' 
+                      ? 'bg-purple-500 text-white' 
+                      : 'text-purple-300 hover:text-white'
+                  }`}
+                >
+                  Upload
+                </button>
+              </nav>
+              
+              <button
+                onClick={() => setShowSettings(true)}
+                className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
+              >
+                ⚙️ Settings
+              </button>
+            </div>
           </div>
         </div>
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <div className="max-w-2xl mx-auto">
-          <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 mb-6">
-            <h2 className="text-white text-xl font-bold mb-4">Current Settings</h2>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <span className="text-purple-300">Theme:</span>
-                <span className="text-white ml-2 capitalize">{settings.theme}</span>
-              </div>
-              <div>
-                <span className="text-purple-300">Reading Mode:</span>
-                <span className="text-white ml-2 capitalize">{settings.readingMode}</span>
-              </div>
-              <div>
-                <span className="text-purple-300">Font Size:</span>
-                <span className="text-white ml-2">{settings.fontSize}px</span>
-              </div>
-              <div>
-                <span className="text-purple-300">Brightness:</span>
-                <span className="text-white ml-2">{settings.brightness}%</span>
-              </div>
-              <div>
-                <span className="text-purple-300">Bionic Reading:</span>
-                <span className="text-white ml-2">{settings.bionicReading ? 'On' : 'Off'}</span>
-              </div>
-              <div>
-                <span className="text-purple-300">Translation:</span>
-                <span className="text-white ml-2">{settings.translationEnabled ? 'On' : 'Off'}</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="text-center">
-            <p className="text-purple-300 text-sm">
-              ✅ Step 2B: User settings system working!<br/>
-              Click the settings button to customize your preferences.
-            </p>
-          </div>
-        </div>
+        {currentView === 'upload' && (
+          <FileUploader 
+            onFileSelect={handleFileSelect}
+            isVisible={true}
+          />
+        )}
+        
+        {currentView === 'library' && (
+          <LibraryView
+            books={books}
+            onBookSelect={handleBookSelect}
+          />
+        )}
       </main>
 
       <SettingsPanel 
