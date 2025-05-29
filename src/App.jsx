@@ -4,6 +4,7 @@ import { bookStorageService } from './services/storage/bookStorageService'
 import SettingsPanel from './components/common/SettingsPanel'
 import FileUploader from './components/upload/FileUploader'
 import LibraryView from './components/library/LibraryView'
+import BookReader from './components/reader/BookReader'
 
 function App() {
   const [settings, setSettings] = useState(settingsService.getSettings());
@@ -12,6 +13,7 @@ function App() {
   const [books, setBooks] = useState([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingStatus, setProcessingStatus] = useState('');
+  const [currentBook, setCurrentBook] = useState(null);
 
   useEffect(() => {
     setBooks(bookStorageService.getAllBooks());
@@ -37,7 +39,6 @@ function App() {
           await bookStorageService.addBook(file);
         } catch (error) {
           console.error(`Failed to process ${file.name}:`, error);
-          // Continue with other files even if one fails
         }
       }
 
@@ -49,7 +50,6 @@ function App() {
       setProcessingStatus('Processing failed: ' + error.message);
     } finally {
       setIsProcessing(false);
-      // Clear status after 3 seconds
       setTimeout(() => setProcessingStatus(''), 3000);
     }
   };
@@ -61,12 +61,30 @@ function App() {
     }
 
     try {
-      const fileData = await bookStorageService.getBookFile(book.id);
-      alert(`Opening "${book.title}" - File loaded successfully! Reader interface coming in next step.`);
+      // Test that we can load the file
+      await bookStorageService.getBookFile(book.id);
+      // Open the reader
+      setCurrentBook(book);
     } catch (error) {
       alert(`Error loading "${book.title}": ${error.message}`);
     }
   };
+
+  const handleCloseReader = () => {
+    setCurrentBook(null);
+    // Refresh books to update reading progress
+    setBooks(bookStorageService.getAllBooks());
+  };
+
+  // If reader is open, show only the reader
+  if (currentBook) {
+    return (
+      <BookReader 
+        book={currentBook} 
+        onClose={handleCloseReader}
+      />
+    );
+  }
 
   return (
     <div className={`min-h-screen ${settings.theme === 'light' ? 'bg-gray-100' : 'bg-gray-900'}`}>
@@ -115,7 +133,6 @@ function App() {
         </div>
       </header>
 
-      {/* Processing Status */}
       {(isProcessing || processingStatus) && (
         <div className="bg-purple-500 text-white px-4 py-2 text-center">
           {isProcessing && <span className="inline-block animate-spin mr-2">⏳</span>}

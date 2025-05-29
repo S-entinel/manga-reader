@@ -19,18 +19,16 @@ class BookStorageService {
     return [...this.books];
   }
 
-  // Add a new book with file processing
   async addBook(file) {
     const bookId = Date.now().toString() + Math.random().toString(36).substr(2, 9);
     
     try {
-      // Process the file and store it
       const fileInfo = await fileProcessor.processFile(file, bookId);
       
       const book = {
         id: bookId,
-        title: file.name.replace(/\.[^/.]+$/, ''), // Remove file extension
-        author: '',
+        title: fileInfo.title || file.name.replace(/\.[^/.]+$/, ''),
+        author: fileInfo.author || '',
         format: fileInfo.format,
         totalPages: fileInfo.totalPages,
         currentPage: 0,
@@ -40,7 +38,8 @@ class BookStorageService {
         tags: [],
         fileName: file.name,
         isProcessed: true,
-        processingStatus: 'completed'
+        processingStatus: 'completed',
+        metadata: fileInfo.metadata || {}
       };
 
       this.books.push(book);
@@ -50,7 +49,6 @@ class BookStorageService {
     } catch (error) {
       console.error('Error adding book:', error);
       
-      // Create a failed book entry
       const book = {
         id: bookId,
         title: file.name.replace(/\.[^/.]+$/, ''),
@@ -94,7 +92,6 @@ class BookStorageService {
     if (index > -1) {
       const deletedBook = this.books.splice(index, 1)[0];
       
-      // Delete the file data from IndexedDB
       try {
         await fileProcessor.deleteFile(bookId);
       } catch (error) {
@@ -115,7 +112,6 @@ class BookStorageService {
     );
   }
 
-  // Get file for reading
   async getBookFile(bookId) {
     const book = this.getBook(bookId);
     if (!book || !book.isProcessed) {
@@ -125,7 +121,16 @@ class BookStorageService {
     return await fileProcessor.getFileForReading(bookId);
   }
 
-  // Get storage usage
+  // Get page content for reading
+  async getPageContent(bookId, pageNumber) {
+    const book = this.getBook(bookId);
+    if (!book || !book.isProcessed) {
+      throw new Error('Book not found or not processed');
+    }
+
+    return await fileProcessor.getPageContent(bookId, pageNumber, book.format);
+  }
+
   async getStorageUsage() {
     return await fileProcessor.getStorageUsage();
   }
