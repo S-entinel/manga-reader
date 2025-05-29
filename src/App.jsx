@@ -8,15 +8,15 @@ import LibraryView from './components/library/LibraryView'
 function App() {
   const [settings, setSettings] = useState(settingsService.getSettings());
   const [showSettings, setShowSettings] = useState(false);
-  const [currentView, setCurrentView] = useState('library'); // 'library' or 'upload'
+  const [currentView, setCurrentView] = useState('library');
   const [books, setBooks] = useState([]);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [processingStatus, setProcessingStatus] = useState('');
 
-  // Load books on component mount
   useEffect(() => {
     setBooks(bookStorageService.getAllBooks());
   }, []);
 
-  // Listen for settings changes
   useEffect(() => {
     const interval = setInterval(() => {
       setSettings(settingsService.getSettings());
@@ -24,24 +24,48 @@ function App() {
     return () => clearInterval(interval);
   }, []);
 
-  const handleFileSelect = (files) => {
-    const newBooks = files.map(file => {
-      // For now, we'll create basic book entries
-      // In the next step, we'll add proper file processing
-      return bookStorageService.addBook({
-        name: file.name,
-        size: file.size,
-        totalPages: Math.floor(Math.random() * 200) + 50, // Placeholder
-      });
-    });
+  const handleFileSelect = async (files) => {
+    setIsProcessing(true);
+    setProcessingStatus(`Processing ${files.length} file(s)...`);
 
-    setBooks(bookStorageService.getAllBooks());
-    setCurrentView('library');
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        setProcessingStatus(`Processing ${file.name} (${i + 1}/${files.length})...`);
+        
+        try {
+          await bookStorageService.addBook(file);
+        } catch (error) {
+          console.error(`Failed to process ${file.name}:`, error);
+          // Continue with other files even if one fails
+        }
+      }
+
+      setBooks(bookStorageService.getAllBooks());
+      setCurrentView('library');
+      setProcessingStatus('Processing complete!');
+
+    } catch (error) {
+      setProcessingStatus('Processing failed: ' + error.message);
+    } finally {
+      setIsProcessing(false);
+      // Clear status after 3 seconds
+      setTimeout(() => setProcessingStatus(''), 3000);
+    }
   };
 
-  const handleBookSelect = (book) => {
-    // For now, just show an alert - we'll build the reader next
-    alert(`Opening "${book.title}" - Reader coming in next step!`);
+  const handleBookSelect = async (book) => {
+    if (!book.isProcessed) {
+      alert(`"${book.title}" failed to process: ${book.error || 'Unknown error'}`);
+      return;
+    }
+
+    try {
+      const fileData = await bookStorageService.getBookFile(book.id);
+      alert(`Opening "${book.title}" - File loaded successfully! Reader interface coming in next step.`);
+    } catch (error) {
+      alert(`Error loading "${book.title}": ${error.message}`);
+    }
   };
 
   return (
@@ -66,7 +90,7 @@ function App() {
                       : 'text-purple-300 hover:text-white'
                   }`}
                 >
-                  Library
+                  Library ({books.length})
                 </button>
                 <button
                   onClick={() => setCurrentView('upload')}
@@ -90,6 +114,14 @@ function App() {
           </div>
         </div>
       </header>
+
+      {/* Processing Status */}
+      {(isProcessing || processingStatus) && (
+        <div className="bg-purple-500 text-white px-4 py-2 text-center">
+          {isProcessing && <span className="inline-block animate-spin mr-2">⏳</span>}
+          {processingStatus}
+        </div>
+      )}
 
       <main className="container mx-auto px-4 py-8">
         {currentView === 'upload' && (

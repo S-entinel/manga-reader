@@ -1,4 +1,5 @@
 import { localStorageService } from './localStorageService';
+import { fileProcessor } from '../fileProcessing/fileProcessor';
 
 class BookStorageService {
   constructor() {
@@ -6,49 +7,77 @@ class BookStorageService {
     this.books = this.loadBooks();
   }
 
-  // Load all books from storage
   loadBooks() {
     return localStorageService.get(this.booksKey) || [];
   }
 
-  // Save books to storage
   saveBooks() {
     return localStorageService.save(this.booksKey, this.books);
   }
 
-  // Get all books
   getAllBooks() {
     return [...this.books];
   }
 
-  // Add a new book
-  addBook(bookData) {
-    const book = {
-      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-      title: bookData.name.replace(/\.[^/.]+$/, ''), // Remove file extension
-      author: bookData.author || '',
-      format: bookData.name.split('.').pop().toLowerCase(),
-      totalPages: bookData.totalPages || 0,
-      currentPage: 0,
-      dateAdded: new Date(),
-      lastRead: null,
-      fileSize: bookData.size,
-      tags: [],
-      fileName: bookData.name,
-      // Note: We're not storing the actual file content yet - that's for the next step
-    };
+  // Add a new book with file processing
+  async addBook(file) {
+    const bookId = Date.now().toString() + Math.random().toString(36).substr(2, 9);
+    
+    try {
+      // Process the file and store it
+      const fileInfo = await fileProcessor.processFile(file, bookId);
+      
+      const book = {
+        id: bookId,
+        title: file.name.replace(/\.[^/.]+$/, ''), // Remove file extension
+        author: '',
+        format: fileInfo.format,
+        totalPages: fileInfo.totalPages,
+        currentPage: 0,
+        dateAdded: new Date(),
+        lastRead: null,
+        fileSize: file.size,
+        tags: [],
+        fileName: file.name,
+        isProcessed: true,
+        processingStatus: 'completed'
+      };
 
-    this.books.push(book);
-    this.saveBooks();
-    return book;
+      this.books.push(book);
+      this.saveBooks();
+      return book;
+
+    } catch (error) {
+      console.error('Error adding book:', error);
+      
+      // Create a failed book entry
+      const book = {
+        id: bookId,
+        title: file.name.replace(/\.[^/.]+$/, ''),
+        author: '',
+        format: file.name.split('.').pop().toLowerCase(),
+        totalPages: 0,
+        currentPage: 0,
+        dateAdded: new Date(),
+        lastRead: null,
+        fileSize: file.size,
+        tags: [],
+        fileName: file.name,
+        isProcessed: false,
+        processingStatus: 'failed',
+        error: error.message
+      };
+
+      this.books.push(book);
+      this.saveBooks();
+      throw error;
+    }
   }
 
-  // Get a specific book
   getBook(bookId) {
     return this.books.find(book => book.id === bookId);
   }
 
-  // Update book progress
   updateProgress(bookId, currentPage) {
     const book = this.books.find(book => book.id === bookId);
     if (book) {
@@ -60,24 +89,45 @@ class BookStorageService {
     return null;
   }
 
-  // Delete a book
-  deleteBook(bookId) {
+  async deleteBook(bookId) {
     const index = this.books.findIndex(book => book.id === bookId);
     if (index > -1) {
       const deletedBook = this.books.splice(index, 1)[0];
+      
+      // Delete the file data from IndexedDB
+      try {
+        await fileProcessor.deleteFile(bookId);
+      } catch (error) {
+        console.error('Error deleting file data:', error);
+      }
+      
       this.saveBooks();
       return deletedBook;
     }
     return null;
   }
 
-  // Search books
   searchBooks(query) {
     const searchTerm = query.toLowerCase();
     return this.books.filter(book => 
       book.title.toLowerCase().includes(searchTerm) ||
       book.author.toLowerCase().includes(searchTerm)
     );
+  }
+
+  // Get file for reading
+  async getBookFile(bookId) {
+    const book = this.getBook(bookId);
+    if (!book || !book.isProcessed) {
+      throw new Error('Book not found or not processed');
+    }
+
+    return await fileProcessor.getFileForReading(bookId);
+  }
+
+  // Get storage usage
+  async getStorageUsage() {
+    return await fileProcessor.getStorageUsage();
   }
 }
 
